@@ -78,7 +78,9 @@ fn sdf2(point: Vec2, size: Vec2, position: Vec2) -> f32 {
     let d = Vec2::length(Vec2::max(q, Vec2::ZERO) + f32::min(q.max_element(), 0.0));
     d
 }
-
+// p, the position of the collision point
+// r, [rectangle width, rectangle height]
+// position, the position of the rectangle
 fn calculate_collision_normal(p: Vec2, r: Vec2, position: Vec2) -> Vec2 {
     let p = p - position;
     
