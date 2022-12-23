@@ -2,9 +2,6 @@ use macroquad::prelude::*;
 
 #[macroquad::main("BasicShapes")]
 async fn main() {
-    let mut mouse_position_x: f32 = 0.0;
-    let mut mouse_position_y: f32 = 0.0;
-
     let mut scene: Vec<&Rectangle> = Vec::new();
 
     let left = Rectangle::new(Vec2::new(0.0, 0.0), Vec2::new(1.0, screen_height() * 2.0));
@@ -13,7 +10,10 @@ async fn main() {
     let bottom = Rectangle::new(Vec2::new(1.0, screen_height() - 1.0), Vec2::new((screen_width() - 1.0) * 2.0, 1.0));
     //let origin = Rectangle::new(Vec2::new(130.0, 130.0), Vec2::new(50.0, 50.0));
 
-    let mut ball = Ball::new(Vec2::new(140.0, 300.0), Vec2::new(-200.0, -100.0));
+
+    //let mut ball = Ball::new(Vec2::new(screen_width() / 2.0, screen_height() / 2.0), Vec2::new(-1.0, -0.50));
+    let initial_direction = Vec2::new(screen_width(), screen_height()).normalize();
+    let mut ball = Ball::new(Vec2::new(screen_width() / 2.0, screen_height() / 2.0), initial_direction);
     let mut can_collide = true;
 
     scene.push(&left);
@@ -25,12 +25,6 @@ async fn main() {
     loop {
         clear_background(BLACK);
 
-        
-        let mouse_position: (f32, f32) = mouse_position();
-        mouse_position_x = mouse_position.0;
-        mouse_position_y = mouse_position.1;
-        
-
         left.draw(RED);
         right.draw(BLUE);
         top.draw(GREEN);
@@ -41,14 +35,14 @@ async fn main() {
         let closest_distance = scene_info.0;
         let closest_rectangle = scene_info.1;
 
-        ball.position = ball.position + ball.direction * get_frame_time();
-        ball.direction.y = ball.direction.y + 980.0 * get_frame_time();
+        ball.position = ball.position + ball.direction * get_frame_time() * 300.0;
+        //ball.direction.y = ball.direction.y + 980.0 * get_frame_time();
         //ball.position = Vec2::new(mouse_position_x, mouse_position_y);
 
-        if closest_distance > 16.0 {
-            can_collide = true;
+        if closest_distance >= 15.0 {
+             can_collide = true;
         }
-        if(closest_distance < 15.0 && can_collide) {
+        if closest_distance < 15.0 && can_collide {
             can_collide = false;
             ball.draw_ball(RED);
             let normal = calculate_collision_normal(
@@ -57,11 +51,16 @@ async fn main() {
                 closest_rectangle.position
             );
 
-            let collision_tradjectory = calculate_collision_tradjectory(ball.direction, normal);
-            println!("tradjectory before collision {} {}", ball.direction.x, ball.direction.y);
-            println!("normal {} {}", normal.x, normal.y);
-            println!("tradjectory after collision {} {}", collision_tradjectory.x, collision_tradjectory.y);
-            ball.direction = collision_tradjectory;
+            let collision_trajectory = calculate_collision_trajectory(ball.direction, normal);
+            //println!("trajectory before collision {} {}", ball.direction.x, ball.direction.y);
+            //println!("normal {} {}", normal.x, normal.y);
+            //println!("trajectory after collision {} {}", collision_trajectory.x, collision_trajectory.y);
+            println!("distance to scene: {}", closest_distance);
+            ball.direction = collision_trajectory;
+
+            ball.position.x = ball.position.x + 2.0 * ball.direction.x;
+            ball.position.y = ball.position.y + 2.0 * ball.direction.y;
+
         } else {
             ball.draw_ball(GREEN);
         }
@@ -90,8 +89,9 @@ fn calculate_collision_normal(p: Vec2, r: Vec2, position: Vec2) -> Vec2 {
     normal.normalize()
 }
 
-fn calculate_collision_tradjectory(direction: Vec2, normal: Vec2) -> Vec2 {
-    2.0 * (direction * normal * Vec2::NEG_ONE) + direction
+fn calculate_collision_trajectory(direction: Vec2, normal: Vec2) -> Vec2 {
+    let direction = 2.0 * (direction * normal * Vec2::NEG_ONE) + direction;
+    direction.normalize()
 }
 
 fn distance_to_scene(scene: &Vec<&Rectangle>, point: Vec2) -> (f32, Rectangle) {
@@ -105,6 +105,7 @@ fn distance_to_scene(scene: &Vec<&Rectangle>, point: Vec2) -> (f32, Rectangle) {
             closest_rectangle = &rectangle;
         }
     }
+
     (distance, Rectangle::new(closest_rectangle.position, closest_rectangle.size))
 }
 
@@ -145,6 +146,13 @@ impl Ball {
 
     fn draw_ball(&self, color: Color) {
         draw_circle(self.position.x, self.position.y, 15.0, color);
-        draw_line(self.position.x, self.position.y, self.position.x + self.direction.x, self.position.y + self.direction.y, 3.0, RED);
+        draw_line(
+            self.position.x,
+            self.position.y,
+            self.position.x + self.direction.x * 50.0,
+            self.position.y + self.direction.y * 50.0,
+            3.0,
+            RED
+        );
     }
 }
