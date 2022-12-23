@@ -28,8 +28,8 @@ async fn main() {
         bottom.draw(YELLOW);
         //origin.draw(WHITE);
 
-        let scene_info = distance_to_scene(&scene, Vec2::new(ball.position.x, ball.position.y));
-        match scene_info {
+        let possible_collisions = detect_collisions(&scene, Vec2::new(ball.position.x, ball.position.y));
+        match possible_collisions {
             Some(rectangles) => {
                 ball.draw_ball(RED);
                 for rectangle in rectangles {
@@ -38,9 +38,9 @@ async fn main() {
                         rectangle.size,
                         rectangle.position
                     );
-
                     let collision_trajectory = calculate_collision_trajectory(ball.direction, normal);
                     ball.direction = collision_trajectory;
+                    println!("trajectory: {}", collision_trajectory);
 
                 }
             },
@@ -54,7 +54,7 @@ async fn main() {
 }
 
 
-fn sdf2(point: Vec2, size: Vec2, position: Vec2) -> f32 {
+fn sdf(point: Vec2, size: Vec2, position: Vec2) -> f32 {
     let point = point - Vec2::new(position.x, position.y);
     let size = size / 2.0;
     let q = Vec2::abs(point) - size;
@@ -76,11 +76,11 @@ fn calculate_collision_trajectory(direction: Vec2, normal: Vec2) -> Vec2 {
     direction.normalize()
 }
 
-fn distance_to_scene(scene: &Vec<&Rectangle>, point: Vec2) -> Option<Vec<Rectangle>> {
+fn detect_collisions(scene: &Vec<&Rectangle>, point: Vec2) -> Option<Vec<Rectangle>> {
     let mut rectangles: Vec<Rectangle> = Vec::new();
 
     for rectangle in scene {
-        let distance_to_rectangle = sdf2(point, rectangle.size, rectangle.position);
+        let distance_to_rectangle = sdf(point, rectangle.size, rectangle.position);
         let rec = rectangle.clone();
         if distance_to_rectangle < 15.0 {
             rectangles.push(*rec);
